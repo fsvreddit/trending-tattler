@@ -88,7 +88,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
         if (flairAction !== "none") {
             actionPromises.push(alertByFlair(flairAction, post, context));
         }
-        actionPromises.push(context.redis.zAdd("ALERTED_POSTS_KEY", {member: post.post.id, score: new Date().getTime()}));
+        actionPromises.push(context.redis.zAdd(ALERTED_POSTS_KEY, {member: post.post.id, score: new Date().getTime()}));
     }
 
     await Promise.all(actionPromises);

@@ -28,4 +28,9 @@ If enabled, this will report the post, making it obvious in the modqueue that th
 
 This will set a flair on the post. This may be useful for alerting your users, but can also allow you to react to trending posts differently in automod rules or other bots that you may have running. 
 
-If you want to use this functionality, you should **either** enter a flair text and (optional) flair CSS class, or a flair template ID (which can be copied from the Post Flair settings on New Reddit. If both flair text and a flair template are specified, the app will use the flair template.
+If you want to use this setting, I recommend using one of these options:
+
+* Flair text on its own (applies the text with default cosmetic settings)
+* Flair text and CSS class combined (applies the text using the cosmetic settings of the CSS class)
+* Flair text and flair template (applies the text using the cosmetic settings for the flair template)
+* Flair template on its own (uses the flair text from the template)

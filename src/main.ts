@@ -12,7 +12,7 @@ Devvit.addSettings([
         ],
         multiSelect: true,
         defaultValue: ["all"],
-        onValidate: async ({value}) => {
+        onValidate: ({value}) => {
             if (!value || value.length === 0) {
                 return "You must select at least one feed to monitor";
             }
@@ -24,7 +24,7 @@ Devvit.addSettings([
         label: "Number of posts to check in feeds",
         helpText: "The app will check this many posts from the feeds sorted by \"hot\"",
         defaultValue: 100,
-        onValidate: async ({value}) => {
+        onValidate: ({value}) => {
             if (!value || value < 1 || value > 200) {
                 return "Value must be between 1 and 200";
             }

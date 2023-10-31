@@ -50,16 +50,6 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
         }
     }
 
-    // if (currentSubreddit.name === "fsvsandbox") {
-    //     const testPost1 = await context.reddit.getPostById("t3_17ifpmo");
-    //     const testPost2 = await context.reddit.getPostById("t3_17akzdh");
-
-    //     foundPosts.push(
-    //         {post: testPost1, foundInFeed: ["all"]},
-    //         {post: testPost2, foundInFeed: ["all", "popular"]},
-    //     );
-    // }
-
     if (foundPosts.length === 0) {
         console.log("No posts found in trending feeds");
         return;
@@ -88,7 +78,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
         if (flairAction !== "none") {
             actionPromises.push(alertByFlair(flairAction, post, context));
         }
-        actionPromises.push(context.redis.zAdd("ALERTED_POSTS_KEY", {member: post.post.id, score: new Date().getTime()}));
+        actionPromises.push(context.redis.zAdd(ALERTED_POSTS_KEY, {member: post.post.id, score: new Date().getTime()}));
     }
 
     await Promise.all(actionPromises);
@@ -107,7 +97,7 @@ async function alertByModmail (posts: PostFound[], subreddit: Subreddit, context
 
     const botAccount = await context.reddit.getUserById(context.appAccountId);
 
-    let message = "There are new posts in trending feeds that have not been alerted on before.\n\n";
+    let message = "Here are the posts that are newly showing in trending feeds:\n\n";
 
     for (const post of posts) {
         message += `* [${post.post.title}](${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
@@ -132,7 +122,10 @@ async function alertByReport (post: PostFound, context: TriggerContext) {
 }
 
 async function alertByFlair (flairAction: string, post: PostFound, context: TriggerContext) {
-    const actionFlairText = await context.settings.get<string>("actionFlairText");
+    let actionFlairText = await context.settings.get<string>("actionFlairText");
+    if (actionFlairText === "") {
+        actionFlairText = undefined;
+    }
 
     let actionFlairCssClass = await context.settings.get<string>("actionFlairCssClass");
     if (actionFlairCssClass === "") {
@@ -142,6 +135,12 @@ async function alertByFlair (flairAction: string, post: PostFound, context: Trig
     let actionFlairTemplateId = await context.settings.get<string>("actionFlairTemplateId");
     if (actionFlairTemplateId === "") {
         actionFlairTemplateId = undefined;
+    } else if (actionFlairTemplateId) {
+        // Check to see if flair template exists for this site, if not then ignore.
+        const flairTemplates = await context.reddit.getPostFlairTemplates(post.post.subredditName);
+        if (!flairTemplates.some(x => x.id === actionFlairTemplateId)) {
+            actionFlairTemplateId = undefined;
+        }
     }
 
     if (!actionFlairText && !actionFlairCssClass) {
@@ -153,18 +152,11 @@ async function alertByFlair (flairAction: string, post: PostFound, context: Trig
         return;
     }
 
-    if (actionFlairTemplateId) {
-        await context.reddit.setPostFlair({
-            postId: post.post.id,
-            subredditName: post.post.subredditName,
-            flairTemplateId: actionFlairTemplateId,
-        });
-    } else {
-        await context.reddit.setPostFlair({
-            postId: post.post.id,
-            subredditName: post.post.subredditName,
-            text: actionFlairText,
-            cssClass: actionFlairCssClass,
-        });
-    }
+    await context.reddit.setPostFlair({
+        postId: post.post.id,
+        subredditName: post.post.subredditName,
+        text: actionFlairText,
+        cssClass: actionFlairCssClass,
+        flairTemplateId: actionFlairTemplateId,
+    });
 }

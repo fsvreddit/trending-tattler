@@ -1,1 +1,1 @@
-# trending-tattler
+Alerts subreddit moderators when a post hits high traffic feeds via modmail, reports on posts or by setting flair. For usage guide see https://www.reddit.com/r/fsvapps/wiki/trendingtattler

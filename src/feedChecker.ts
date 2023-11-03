@@ -1,5 +1,6 @@
 import {Post, ScheduledJobEvent, Subreddit, TriggerContext} from "@devvit/public-api";
 import {addDays} from "date-fns";
+import _ from "lodash";
 
 interface PostFound {
     post: Post,
@@ -7,6 +8,15 @@ interface PostFound {
 }
 
 const ALERTED_POSTS_KEY = "AlertedPosts";
+
+export async function getResultsForFeed (feed: string, numberOfPostsToCheck: number, context: TriggerContext): Promise<PostFound[]> {
+    const posts = await context.reddit.getHotPosts({
+        subredditName: feed,
+        limit: numberOfPostsToCheck,
+    }).all();
+
+    return posts.map(post => ({post, foundInFeed: [feed]}));
+}
 
 export async function checkFeeds (event: ScheduledJobEvent, context: TriggerContext) {
     const feedsToMonitor = await context.settings.get<string[]>("feedsToMonitor");
@@ -17,6 +27,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
 
     const actionSendModmail = await context.settings.get<boolean>("actionSendModmail") ?? true;
     const actionReportPost = await context.settings.get<boolean>("actionReportPost") ?? false;
+    const actionSendDiscordMessage = await context.settings.get<boolean>("actionSendDiscordMessage") ?? false;
     const actionSetFlair = await context.settings.get<string[]>("actionSetFlair");
     let flairAction = "none";
     if (actionSetFlair && actionSetFlair.length > 0) {
@@ -34,19 +45,15 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
 
     const foundPosts: PostFound[] = [];
 
-    for (const feed of feedsToMonitor) {
-        const posts = await context.reddit.getHotPosts({
-            subredditName: feed,
-            limit: numberOfPostsToCheck,
-        }).all();
+    const results = await Promise.all(feedsToMonitor.map(feed => getResultsForFeed(feed, numberOfPostsToCheck, context)));
+    const flatResults = _.flatten(results);
 
-        for (const post of posts.filter(post => post.subredditName === currentSubreddit.name)) {
-            const existingFoundPost = foundPosts.find(existingPost => existingPost.post.id === post.id);
-            if (existingFoundPost) {
-                existingFoundPost.foundInFeed.push(feed);
-            } else {
-                foundPosts.push({post, foundInFeed: [feed]});
-            }
+    for (const item of flatResults.filter(post => post.post.subredditName === currentSubreddit.name)) {
+        const existingFoundPost = foundPosts.find(existingPost => existingPost.post.id === item.post.id);
+        if (existingFoundPost) {
+            existingFoundPost.foundInFeed.push(item.foundInFeed[0]);
+        } else {
+            foundPosts.push(item);
         }
     }
 
@@ -68,6 +75,10 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
 
     if (actionSendModmail) {
         actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubreddit, context));
+    }
+
+    if (actionSendDiscordMessage) {
+        actionPromises.push(alertByDiscord(foundPostsNotAlerted, context));
     }
 
     for (const post of foundPostsNotAlerted) {
@@ -112,6 +123,41 @@ async function alertByModmail (posts: PostFound[], subreddit: Subreddit, context
     });
 }
 
+async function alertByDiscord (posts: PostFound[], context: TriggerContext) {
+    if (posts.length === 0) {
+        return;
+    }
+
+    const webhookUrl = await context.settings.get<string>("actionDiscordWebhookUrl");
+    if (!webhookUrl) {
+        return;
+    }
+
+    let message = "There are posts newly showing in trending feeds!\n\n";
+    for (const post of posts) {
+        message += `* [${post.post.title}](${post.post.permalink}) (https://www.reddit.com${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
+    }
+
+    const params = {
+        content: message,
+    };
+
+    try {
+        await fetch(
+            webhookUrl,
+            {
+                method: "post",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(params),
+            }
+        );
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 async function alertByReport (post: PostFound, context: TriggerContext) {
     const featureEnabled = await context.settings.get<boolean>("actionReportPost") ?? false;
     if (!featureEnabled) {
@@ -152,11 +198,15 @@ async function alertByFlair (flairAction: string, post: PostFound, context: Trig
         return;
     }
 
-    await context.reddit.setPostFlair({
-        postId: post.post.id,
-        subredditName: post.post.subredditName,
-        text: actionFlairText,
-        cssClass: actionFlairCssClass,
-        flairTemplateId: actionFlairTemplateId,
-    });
+    try {
+        await context.reddit.setPostFlair({
+            postId: post.post.id,
+            subredditName: post.post.subredditName,
+            text: actionFlairText,
+            cssClass: actionFlairCssClass,
+            flairTemplateId: actionFlairTemplateId,
+        });
+    } catch (error) {
+        console.log(error);
+    }
 }

@@ -50,6 +50,29 @@ Devvit.addSettings([
             },
             {
                 type: "group",
+                label: "Discord notifications",
+                fields: [
+                    {
+                        type: "boolean",
+                        name: "actionSendDiscordMessage",
+                        label: "Send Discord Notification",
+                        helpText: "Send a notification to a Discord channel. Recommended use is for private moderation spaces only",
+                    },
+                    {
+                        type: "string",
+                        name: "actionDiscordWebhookUrl",
+                        label: "Discord Webhook URL",
+                        onValidate: ({value}) => {
+                            const webhookRegex = /^https:\/\/discord.com\/api\/webhooks\//;
+                            if (value && !webhookRegex.test(value)) {
+                                return "Please enter a valid Discord webhook URL";
+                            }
+                        },
+                    },
+                ],
+            },
+            {
+                type: "group",
                 label: "Flair options",
                 helpText: "If this is enabled, a flair template takes priority over text/class. It is suggested that EITHER a template OR text and class is provided.",
                 fields: [
@@ -99,8 +122,12 @@ Devvit.addTrigger({
         const currentJobs = await context.scheduler.listJobs();
         await Promise.all(currentJobs.map(job => context.scheduler.cancelJob(job.id)));
 
+        const minute = Math.floor(Math.random() * 30);
+        console.log(`Running at ${minute} and ${minute + 30} past the hour`);
+
         await context.scheduler.runJob({
-            cron: "15,45 * * * *", // Every 30 minutes
+            cron: `${minute}/30 * * * *`, // Every 30 minutes, randomised for different installs
+            // cron: "* * * * *", // Every 30 minutes, randomised for different installs
             name: "checkFeeds",
         });
     },
@@ -109,6 +136,7 @@ Devvit.addTrigger({
 Devvit.configure({
     redditAPI: true,
     redis: true,
+    http: true,
 });
 
 export default Devvit;

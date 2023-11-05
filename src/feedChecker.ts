@@ -135,7 +135,7 @@ async function alertByDiscord (posts: PostFound[], context: TriggerContext) {
 
     let message = "There are posts newly showing in trending feeds!\n\n";
     for (const post of posts) {
-        message += `* [${post.post.title}](${post.post.permalink}) (https://www.reddit.com${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
+        message += `* [${post.post.title}](https://www.reddit.com${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
     }
 
     const params = {
@@ -159,11 +159,6 @@ async function alertByDiscord (posts: PostFound[], context: TriggerContext) {
 }
 
 async function alertByReport (post: PostFound, context: TriggerContext) {
-    const featureEnabled = await context.settings.get<boolean>("actionReportPost") ?? false;
-    if (!featureEnabled) {
-        return;
-    }
-
     await context.reddit.report(post.post, {reason: `This post is trending! It is currently in these feeds: ${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")}`});
 }
 

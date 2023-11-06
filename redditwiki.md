@@ -20,6 +20,10 @@ More than one action option can be selected at a time. If no options are set at 
 
 If enabled, this will send a modmail with details of each post that has been newly found in the high traffic feed. 
 
+##Send Discord Notification
+
+If enabled, this will send a message to the Discord webhook specified. To learn how to create a webhook, follow [this guide](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks), and use the "Copy Webhook URL" button within Discord and paste the URL into this app's configuration screen.
+
 ###Report
 
 If enabled, this will report the post, making it obvious in the modqueue that the post has hit the high traffic feed.

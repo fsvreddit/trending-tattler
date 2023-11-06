@@ -35,7 +35,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
     }
 
     // Are any actions defined? You'd hope so, but check and quit if not.
-    if (!actionSendModmail && !actionReportPost && flairAction === "none") {
+    if (!actionSendModmail && !actionSendDiscordMessage && !actionReportPost && flairAction === "none") {
         console.log("No actions are set. No point checking for trending posts.");
         return;
     }
@@ -133,7 +133,7 @@ async function alertByDiscord (posts: PostFound[], context: TriggerContext) {
         return;
     }
 
-    let message = "There are posts newly showing in trending feeds!\n\n";
+    let message = "There are posts newly showing in trending feeds!\n";
     for (const post of posts) {
         message += `* [${post.post.title}](https://www.reddit.com${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
     }

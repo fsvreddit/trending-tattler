@@ -106,6 +106,31 @@ Devvit.addSettings([
                     },
                 ],
             },
+            {
+                type: "group",
+                label: "Sticky comment options",
+                fields: [
+                    {
+                        type: "select",
+                        name: "actionStickyCommentOption",
+                        label: "Sticky Comment",
+                        helpText: "Adds a sticky comment to welcome people not used to the subreddit",
+                        options: [
+                            {value: "none", label: "Do not add a sticky comment"},
+                            {value: "addifnone", label: "Add a sticky comment if there is not already one present"},
+                            {value: "addalways", label: "Add a sticky comment even if one is present"},
+                        ],
+                        multiSelect: false,
+                        defaultValue: ["none"],
+                    },
+                    {
+                        type: "paragraph",
+                        name: "actionStickyCommmentContent",
+                        label: "Sticky Comment Text",
+                        helpText: "The text to include in the sticky comment",
+                    },
+                ],
+            },
         ],
     },
 ]);

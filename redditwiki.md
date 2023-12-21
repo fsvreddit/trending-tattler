@@ -38,3 +38,8 @@ If you want to use this setting, I recommend using one of these options:
 * Flair text and CSS class combined (applies the text using the cosmetic settings of the CSS class)
 * Flair text and flair template (applies the text using the cosmetic settings for the flair template)
 * Flair template on its own (uses the flair text from the template)
+
+
+###Sticky Comment
+
+This gives you the option to create a sticky comment on the post as a "welcome" to people who might need a reminder of your subreddit's rules. You can choose to sticky a new comment regardless of whether there is one already present, or choose to only sticky a new comment if there's not one there already.

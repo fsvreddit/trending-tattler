@@ -29,13 +29,20 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
     const actionReportPost = await context.settings.get<boolean>("actionReportPost") ?? false;
     const actionSendDiscordMessage = await context.settings.get<boolean>("actionSendDiscordMessage") ?? false;
     const actionSetFlair = await context.settings.get<string[]>("actionSetFlair");
+    const actionCreateStickyComment = await context.settings.get<string[]>("actionStickyCommentOption");
+
     let flairAction = "none";
     if (actionSetFlair && actionSetFlair.length > 0) {
         flairAction = actionSetFlair[0];
     }
 
+    let actionStickyCommentOption = "none";
+    if (actionCreateStickyComment && actionCreateStickyComment.length > 0) {
+        actionStickyCommentOption = actionCreateStickyComment[0];
+    }
+
     // Are any actions defined? You'd hope so, but check and quit if not.
-    if (!actionSendModmail && !actionSendDiscordMessage && !actionReportPost && flairAction === "none") {
+    if (!actionSendModmail && !actionSendDiscordMessage && !actionReportPost && flairAction === "none" && actionStickyCommentOption === "none") {
         console.log("No actions are set. No point checking for trending posts.");
         return;
     }
@@ -56,6 +63,16 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
             foundPosts.push(item);
         }
     }
+
+    foundPosts.push({
+        foundInFeed: ["all"],
+        post: await context.reddit.getPostById("t3_18agbpg"),
+    });
+
+    foundPosts.push({
+        foundInFeed: ["all"],
+        post: await context.reddit.getPostById("t3_18agcq1"),
+    });
 
     if (foundPosts.length === 0) {
         console.log("No posts found in trending feeds");
@@ -89,6 +106,11 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
         if (flairAction !== "none") {
             actionPromises.push(alertByFlair(flairAction, post, context));
         }
+
+        if (actionStickyCommentOption !== "none") {
+            actionPromises.push(alertByStickyComment(actionStickyCommentOption, post, context));
+        }
+
         actionPromises.push(context.redis.zAdd(ALERTED_POSTS_KEY, {member: post.post.id, score: new Date().getTime()}));
     }
 
@@ -204,4 +226,21 @@ async function alertByFlair (flairAction: string, post: PostFound, context: Trig
     } catch (error) {
         console.log(error);
     }
+}
+
+async function alertByStickyComment (stickyCommentAction: string, post: PostFound, context: TriggerContext) {
+    if (stickyCommentAction === "addifnone") {
+        const comments = await post.post.comments.all();
+        if (comments.some(comment => comment.isStickied())) {
+            return;
+        }
+    }
+
+    const commentText = await context.settings.get<string>("actionStickyCommmentContent");
+    if (!commentText) {
+        return;
+    }
+
+    const newComment = await post.post.addComment({text: commentText});
+    await newComment.distinguish(true);
 }

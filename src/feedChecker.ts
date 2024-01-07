@@ -64,16 +64,6 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
         }
     }
 
-    foundPosts.push({
-        foundInFeed: ["all"],
-        post: await context.reddit.getPostById("t3_18agbpg"),
-    });
-
-    foundPosts.push({
-        foundInFeed: ["all"],
-        post: await context.reddit.getPostById("t3_18agcq1"),
-    });
-
     if (foundPosts.length === 0) {
         console.log("No posts found in trending feeds");
         return;

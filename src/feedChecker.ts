@@ -64,15 +64,25 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
         }
     }
 
-    foundPosts.push({
-        foundInFeed: ["all"],
-        post: await context.reddit.getPostById("t3_18agbpg"),
-    });
+    const testModeEnabled = await context.settings.get<boolean>("testModeEnabled");
+    if (testModeEnabled && currentSubreddit.numberOfSubscribers <= 50) {
+        const testModeTitleStringMatch = await context.settings.get<string>("testModeTitleStringMatch");
+        if (testModeTitleStringMatch) {
+            console.log("Test mode is enabled! Looking for posts");
+            const currentSubredditPosts = await context.reddit.getNewPosts({
+                subredditName: currentSubreddit.name,
+                limit: 100,
+            }).all();
 
-    foundPosts.push({
-        foundInFeed: ["all"],
-        post: await context.reddit.getPostById("t3_18agcq1"),
-    });
+            for (const post of currentSubredditPosts.filter(post => post.title.includes(testModeTitleStringMatch))) {
+                console.log(`Pushing post ${post.id} into trending list`);
+                foundPosts.push({
+                    post,
+                    foundInFeed: ["popular"],
+                });
+            }
+        }
+    }
 
     if (foundPosts.length === 0) {
         console.log("No posts found in trending feeds");

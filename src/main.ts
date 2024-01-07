@@ -133,6 +133,25 @@ Devvit.addSettings([
             },
         ],
     },
+    {
+        type: "group",
+        label: "Test mode",
+        helpText: "Enables a test mode, allowing you to test out the impact of your action settings. Test mode will not function in subreddits with more than 50 subscribers, it is intended for private testing subreddits only.",
+        fields: [
+            {
+                type: "boolean",
+                name: "testModeEnabled",
+                label: "Enable test mode",
+                defaultValue: false,
+            },
+            {
+                type: "string",
+                name: "testModeTitleStringMatch",
+                label: "Text to match in post subject",
+                helpText: "If test mode is enabled, posts with this text in the title will be treated as if they are currently in /r/popular, but not /r/all",
+            },
+        ],
+    },
 ]);
 
 Devvit.addSchedulerJob({

@@ -43,3 +43,9 @@ If you want to use this setting, I recommend using one of these options:
 ###Sticky Comment
 
 This gives you the option to create a sticky comment on the post as a "welcome" to people who might need a reminder of your subreddit's rules. You can choose to sticky a new comment regardless of whether there is one already present, or choose to only sticky a new comment if there's not one there already.
+
+##Test Mode
+
+This allows you to test out action settings in a small (under 50 subscriber) test subreddit. When enabled, you can set a keyword for a post title which when matched treats the post as if it is in a trending feed.
+
+When using this option, remember that the application runs on a schedule (once per 30 minutes, with the exact "past the hour" time randomised per install) so notifications will take some time to appear. 

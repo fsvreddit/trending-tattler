@@ -1,5 +1,6 @@
-import {Post, ScheduledJobEvent, Subreddit, TriggerContext} from "@devvit/public-api";
+import {Post, ScheduledJobEvent, TriggerContext} from "@devvit/public-api";
 import {AppSetting, SetFlairOption, StickyCommentOption} from "./settings.js";
+import {getSubredditName} from "./utility.js";
 import {addDays} from "date-fns";
 import _ from "lodash";
 
@@ -49,14 +50,14 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
     }
 
     const numberOfPostsToCheck = await context.settings.get<number>(AppSetting.NumberOfPostsToCheck) ?? 100;
-    const currentSubreddit = await context.reddit.getCurrentSubreddit();
+    const currentSubredditName = await getSubredditName(context);
 
     const foundPosts: PostFound[] = [];
 
     const results = await Promise.all(feedsToMonitor.map(feed => getResultsForFeed(feed, numberOfPostsToCheck, context)));
     const flatResults = _.flatten(results);
 
-    for (const item of flatResults.filter(post => post.post.subredditName === currentSubreddit.name)) {
+    for (const item of flatResults.filter(post => post.post.subredditName === currentSubredditName)) {
         const existingFoundPost = foundPosts.find(existingPost => existingPost.post.id === item.post.id);
         if (existingFoundPost) {
             existingFoundPost.foundInFeed.push(item.foundInFeed[0]);
@@ -82,7 +83,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
     const actionPromises: Promise<void | number>[] = [];
 
     if (actionSendModmail) {
-        actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubreddit, context));
+        actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubredditName, context));
     }
 
     if (actionSendDiscordMessage) {
@@ -114,7 +115,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
     }
 }
 
-async function alertByModmail (posts: PostFound[], subreddit: Subreddit, context: TriggerContext) {
+async function alertByModmail (posts: PostFound[], subredditName: string, context: TriggerContext) {
     if (posts.length === 0) {
         return;
     }
@@ -132,7 +133,7 @@ async function alertByModmail (posts: PostFound[], subreddit: Subreddit, context
         subject: "Notification of posts on trending feeds",
         body: message,
         isAuthorHidden: true,
-        subredditName: subreddit.name,
+        subredditName,
     });
 }
 

@@ -1,4 +1,5 @@
 import {Post, ScheduledJobEvent, Subreddit, TriggerContext} from "@devvit/public-api";
+import {AppSetting, SetFlairOption, StickyCommentOption} from "./settings.js";
 import {addDays} from "date-fns";
 import _ from "lodash";
 
@@ -19,35 +20,35 @@ export async function getResultsForFeed (feed: string, numberOfPostsToCheck: num
 }
 
 export async function checkFeeds (event: ScheduledJobEvent, context: TriggerContext) {
-    const feedsToMonitor = await context.settings.get<string[]>("feedsToMonitor");
+    const feedsToMonitor = await context.settings.get<string[]>(AppSetting.FeedsToMonitor);
     if (!feedsToMonitor || feedsToMonitor.length === 0) {
         console.log("No feeds selected for monitoring!");
         return;
     }
 
-    const actionSendModmail = await context.settings.get<boolean>("actionSendModmail") ?? true;
-    const actionReportPost = await context.settings.get<boolean>("actionReportPost") ?? false;
-    const actionSendDiscordMessage = await context.settings.get<boolean>("actionSendDiscordMessage") ?? false;
-    const actionSetFlair = await context.settings.get<string[]>("actionSetFlair");
-    const actionCreateStickyComment = await context.settings.get<string[]>("actionStickyCommentOption");
+    const actionSendModmail = await context.settings.get<boolean>(AppSetting.ActionSendModmail) ?? true;
+    const actionReportPost = await context.settings.get<boolean>(AppSetting.ActionReportPost) ?? false;
+    const actionSendDiscordMessage = await context.settings.get<boolean>(AppSetting.ActionSendDiscordMessage) ?? false;
+    const actionSetFlair = await context.settings.get<string[]>(AppSetting.ActionSetFlair);
+    const actionCreateStickyComment = await context.settings.get<string[]>(AppSetting.ActionStickyCommentOption);
 
-    let flairAction = "none";
+    let flairAction: string = SetFlairOption.None;
     if (actionSetFlair && actionSetFlair.length > 0) {
         flairAction = actionSetFlair[0];
     }
 
-    let actionStickyCommentOption = "none";
+    let actionStickyCommentOption: string = StickyCommentOption.None;
     if (actionCreateStickyComment && actionCreateStickyComment.length > 0) {
         actionStickyCommentOption = actionCreateStickyComment[0];
     }
 
     // Are any actions defined? You'd hope so, but check and quit if not.
-    if (!actionSendModmail && !actionSendDiscordMessage && !actionReportPost && flairAction === "none" && actionStickyCommentOption === "none") {
+    if (!actionSendModmail && !actionSendDiscordMessage && !actionReportPost && flairAction === SetFlairOption.None && actionStickyCommentOption === StickyCommentOption.None) {
         console.log("No actions are set. No point checking for trending posts.");
         return;
     }
 
-    const numberOfPostsToCheck = await context.settings.get<number>("numberOfPostsToCheck") ?? 100;
+    const numberOfPostsToCheck = await context.settings.get<number>(AppSetting.NumberOfPostsToCheck) ?? 100;
     const currentSubreddit = await context.reddit.getCurrentSubreddit();
 
     const foundPosts: PostFound[] = [];
@@ -93,11 +94,11 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
             actionPromises.push(alertByReport(post, context));
         }
 
-        if (flairAction !== "none") {
+        if (flairAction !== SetFlairOption.None) {
             actionPromises.push(alertByFlair(flairAction, post, context));
         }
 
-        if (actionStickyCommentOption !== "none") {
+        if (actionStickyCommentOption !== StickyCommentOption.None) {
             actionPromises.push(alertByStickyComment(actionStickyCommentOption, post, context));
         }
 
@@ -140,7 +141,7 @@ async function alertByDiscord (posts: PostFound[], context: TriggerContext) {
         return;
     }
 
-    const webhookUrl = await context.settings.get<string>("actionDiscordWebhookUrl");
+    const webhookUrl = await context.settings.get<string>(AppSetting.ActionDiscordWebhookUrl);
     if (!webhookUrl) {
         return;
     }
@@ -175,17 +176,17 @@ async function alertByReport (post: PostFound, context: TriggerContext) {
 }
 
 async function alertByFlair (flairAction: string, post: PostFound, context: TriggerContext) {
-    let actionFlairText = await context.settings.get<string>("actionFlairText");
+    let actionFlairText = await context.settings.get<string>(AppSetting.ActionFlairText);
     if (actionFlairText === "") {
         actionFlairText = undefined;
     }
 
-    let actionFlairCssClass = await context.settings.get<string>("actionFlairCssClass");
+    let actionFlairCssClass = await context.settings.get<string>(AppSetting.ActionFlairCssClass);
     if (actionFlairCssClass === "") {
         actionFlairCssClass = undefined;
     }
 
-    let actionFlairTemplateId = await context.settings.get<string>("actionFlairTemplateId");
+    let actionFlairTemplateId = await context.settings.get<string>(AppSetting.ActionFlairTemplateId);
     if (actionFlairTemplateId === "") {
         actionFlairTemplateId = undefined;
     } else if (actionFlairTemplateId) {
@@ -200,7 +201,7 @@ async function alertByFlair (flairAction: string, post: PostFound, context: Trig
         return;
     }
 
-    if (flairAction === "set" && (post.post.flair && post.post.flair.text)) {
+    if (flairAction === SetFlairOption.Set && (post.post.flair && post.post.flair.text)) {
         // Flair already set.
         return;
     }
@@ -219,14 +220,14 @@ async function alertByFlair (flairAction: string, post: PostFound, context: Trig
 }
 
 async function alertByStickyComment (stickyCommentAction: string, post: PostFound, context: TriggerContext) {
-    if (stickyCommentAction === "addifnone") {
+    if (stickyCommentAction === StickyCommentOption.AddIfNone) {
         const comments = await post.post.comments.all();
         if (comments.some(comment => comment.isStickied())) {
             return;
         }
     }
 
-    const commentText = await context.settings.get<string>("actionStickyCommmentContent");
+    const commentText = await context.settings.get<string>(AppSetting.ActionStickyCommentContent);
     if (!commentText) {
         return;
     }

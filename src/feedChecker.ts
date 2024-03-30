@@ -20,7 +20,7 @@ export async function getResultsForFeed (feed: string, numberOfPostsToCheck: num
     return posts.map(post => ({post, foundInFeed: [feed]}));
 }
 
-export async function checkFeeds (event: ScheduledJobEvent, context: TriggerContext) {
+export async function checkFeeds (_event: ScheduledJobEvent, context: TriggerContext) {
     const settings = await context.settings.getAll();
 
     const feedsToMonitor = settings[AppSetting.FeedsToMonitor] as string[] ?? [];

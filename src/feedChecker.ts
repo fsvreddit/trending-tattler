@@ -1,7 +1,7 @@
 import {Post, ScheduledJobEvent, TriggerContext} from "@devvit/public-api";
 import {AppSetting, SetFlairOption, StickyCommentOption} from "./settings.js";
 import {getSubredditName} from "./utility.js";
-import {addDays} from "date-fns";
+import {subDays} from "date-fns";
 import _ from "lodash";
 
 interface PostFound {
@@ -111,7 +111,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
     await Promise.all(actionPromises);
 
     // Now remove records of posts that hit trending feeds at least three days ago.
-    const oldAlreadyAlertedPostsToPurge = alreadyAlertedPosts.filter(x => new Date(x.score) < addDays(new Date(), -3)).map(x => x.member);
+    const oldAlreadyAlertedPostsToPurge = alreadyAlertedPosts.filter(x => new Date(x.score) < subDays(new Date(), 3)).map(x => x.member);
     if (oldAlreadyAlertedPostsToPurge.length > 0) {
         await context.redis.zRem(ALERTED_POSTS_KEY, oldAlreadyAlertedPostsToPurge);
     }

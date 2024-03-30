@@ -50,3 +50,15 @@ If you want to use this setting, I recommend using one of these options:
 ### Sticky Comment
 
 This gives you the option to create a sticky comment on the post as a "welcome" to people who might need a reminder of your subreddit's rules. You can choose to sticky a new comment regardless of whether there is one already present, or choose to only sticky a new comment if there's not one there already.
+
+### Recent changes
+
+v1.3 adds the ability to suppress embeds in Discord notifications
+
+v1.2 added the ability to add a sticky comment on trending posts
+
+v1.1 added Discord notifications 
+
+### Source code
+
+Trending Tattler is open source. You can find it on Github [here](https://github.com/fsvreddit/trending-tattler).

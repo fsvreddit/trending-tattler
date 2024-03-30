@@ -28,6 +28,8 @@ If enabled, this will send a message to the Discord webhook specified. To learn 
 
 ![Example notification](https://raw.githubusercontent.com/fsvreddit/trending-tattler/main/doc_images/discord.png)
 
+If Suppress Embeds is turned off, Discord may include an embed with a preview of the post. You can force this off if you wish with this option.
+
 ### Report
 
 If enabled, this will report the post, making it obvious in the modqueue that the post has hit the high traffic feed.

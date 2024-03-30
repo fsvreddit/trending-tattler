@@ -7,6 +7,7 @@ export enum AppSetting {
     ActionReportPost = "actionReportPost",
     ActionSendDiscordMessage = "actionSendDiscordMessage",
     ActionDiscordWebhookUrl = "actionDiscordWebhookUrl",
+    ActionDiscordSuppressEmbeds = "actionDiscordSuppressEmbeds",
     ActionSetFlair = "actionSetFlair",
     ActionFlairText = "actionFlairText",
     ActionFlairCssClass = "actionFlairCssClass",
@@ -99,6 +100,13 @@ export const appSettings: SettingsFormField[] = [
                                 return "Please enter a valid Discord webhook URL";
                             }
                         },
+                    },
+                    {
+                        type: "boolean",
+                        name: AppSetting.ActionDiscordSuppressEmbeds,
+                        label: "Suppress Embeds",
+                        helpText: "Controls whether Discord will display embeds with alerts. Turn this on to reduce clutter.",
+                        defaultValue: false,
                     },
                 ],
             },

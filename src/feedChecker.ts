@@ -21,25 +21,27 @@ export async function getResultsForFeed (feed: string, numberOfPostsToCheck: num
 }
 
 export async function checkFeeds (event: ScheduledJobEvent, context: TriggerContext) {
-    const feedsToMonitor = await context.settings.get<string[]>(AppSetting.FeedsToMonitor);
-    if (!feedsToMonitor || feedsToMonitor.length === 0) {
+    const settings = await context.settings.getAll();
+
+    const feedsToMonitor = settings[AppSetting.FeedsToMonitor] as string[] ?? [];
+    if (feedsToMonitor.length === 0) {
         console.log("No feeds selected for monitoring!");
         return;
     }
 
-    const actionSendModmail = await context.settings.get<boolean>(AppSetting.ActionSendModmail) ?? true;
-    const actionReportPost = await context.settings.get<boolean>(AppSetting.ActionReportPost) ?? false;
-    const actionSendDiscordMessage = await context.settings.get<boolean>(AppSetting.ActionSendDiscordMessage) ?? false;
-    const actionSetFlair = await context.settings.get<string[]>(AppSetting.ActionSetFlair);
-    const actionCreateStickyComment = await context.settings.get<string[]>(AppSetting.ActionStickyCommentOption);
+    const actionSendModmail = settings[AppSetting.ActionSendModmail] as boolean ?? true;
+    const actionReportPost = settings[AppSetting.ActionReportPost] as boolean ?? false;
+    const actionSendDiscordMessage = settings[AppSetting.ActionSendDiscordMessage] as boolean ?? false;
+    const actionSetFlair = settings[AppSetting.ActionSetFlair] as string[] ?? [];
+    const actionCreateStickyComment = settings[AppSetting.ActionStickyCommentOption] as string[] ?? [];
 
     let flairAction: string = SetFlairOption.None;
-    if (actionSetFlair && actionSetFlair.length > 0) {
+    if (actionSetFlair.length > 0) {
         flairAction = actionSetFlair[0];
     }
 
     let actionStickyCommentOption: string = StickyCommentOption.None;
-    if (actionCreateStickyComment && actionCreateStickyComment.length > 0) {
+    if (actionCreateStickyComment.length > 0) {
         actionStickyCommentOption = actionCreateStickyComment[0];
     }
 
@@ -49,7 +51,7 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
         return;
     }
 
-    const numberOfPostsToCheck = await context.settings.get<number>(AppSetting.NumberOfPostsToCheck) ?? 100;
+    const numberOfPostsToCheck = settings[AppSetting.NumberOfPostsToCheck] as number ?? 100;
     const currentSubredditName = await getSubredditName(context);
 
     const foundPosts: PostFound[] = [];
@@ -138,18 +140,26 @@ async function alertByModmail (posts: PostFound[], subredditName: string, contex
 }
 
 async function alertByDiscord (posts: PostFound[], context: TriggerContext) {
+    const settings = await context.settings.getAll();
+
     if (posts.length === 0) {
         return;
     }
 
-    const webhookUrl = await context.settings.get<string>(AppSetting.ActionDiscordWebhookUrl);
+    const webhookUrl = settings[AppSetting.ActionDiscordWebhookUrl] as string | undefined;
     if (!webhookUrl) {
         return;
     }
 
+    const suppressEmbeds = settings[AppSetting.ActionDiscordSuppressEmbeds] as boolean ?? false;
+
     let message = "There are posts newly showing in trending feeds!\n";
     for (const post of posts) {
-        message += `* [${post.post.title}](https://www.reddit.com${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
+        if (suppressEmbeds) {
+            message += `* [${post.post.title}](<https://www.reddit.com${post.post.permalink}>) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
+        } else {
+            message += `* [${post.post.title}](https://www.reddit.com${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
+        }
     }
 
     const params = {
@@ -177,17 +187,19 @@ async function alertByReport (post: PostFound, context: TriggerContext) {
 }
 
 async function alertByFlair (flairAction: string, post: PostFound, context: TriggerContext) {
-    let actionFlairText = await context.settings.get<string>(AppSetting.ActionFlairText);
+    const settings = await context.settings.getAll();
+
+    let actionFlairText = settings[AppSetting.ActionFlairText] as string | undefined;
     if (actionFlairText === "") {
         actionFlairText = undefined;
     }
 
-    let actionFlairCssClass = await context.settings.get<string>(AppSetting.ActionFlairCssClass);
+    let actionFlairCssClass = settings[AppSetting.ActionFlairCssClass] as string | undefined;
     if (actionFlairCssClass === "") {
         actionFlairCssClass = undefined;
     }
 
-    let actionFlairTemplateId = await context.settings.get<string>(AppSetting.ActionFlairTemplateId);
+    let actionFlairTemplateId = settings[AppSetting.ActionFlairTemplateId] as string | undefined;
     if (actionFlairTemplateId === "") {
         actionFlairTemplateId = undefined;
     } else if (actionFlairTemplateId) {

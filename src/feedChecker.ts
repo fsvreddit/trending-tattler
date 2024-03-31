@@ -1,15 +1,13 @@
 import {Post, ScheduledJobEvent, TriggerContext} from "@devvit/public-api";
 import {AppSetting, SetFlairOption, StickyCommentOption} from "./settings.js";
 import {getSubredditName} from "./utility.js";
-import {subDays} from "date-fns";
+import {addDays} from "date-fns";
 import _ from "lodash";
 
 interface PostFound {
     post: Post,
     foundInFeed: string[]
 }
-
-const ALERTED_POSTS_KEY = "AlertedPosts";
 
 export async function getResultsForFeed (feed: string, numberOfPostsToCheck: number, context: TriggerContext): Promise<PostFound[]> {
     const posts = await context.reddit.getHotPosts({
@@ -73,16 +71,21 @@ export async function checkFeeds (_event: ScheduledJobEvent, context: TriggerCon
         return;
     }
 
-    const alreadyAlertedPosts = await context.redis.zRange(ALERTED_POSTS_KEY, 0, -1);
-
-    const foundPostsNotAlerted = foundPosts.filter(foundPost => !alreadyAlertedPosts.some(alertedPost => alertedPost.member === foundPost.post.id));
+    const foundPostsNotAlerted: PostFound[] = [];
+    for (const post of foundPosts) {
+        // eslint-disable-next-line no-await-in-loop
+        const alreadyAlerted = await context.redis.get(`alerted~${post.post.id}`);
+        if (!alreadyAlerted) {
+            foundPostsNotAlerted.push(post);
+        }
+    }
 
     if (foundPostsNotAlerted.length === 0) {
         console.log("There are posts currently in trending feeds, but they have already been handled");
         return;
     }
 
-    const actionPromises: Promise<void | number>[] = [];
+    const actionPromises: Promise<unknown>[] = [];
 
     if (actionSendModmail) {
         actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubredditName, context));
@@ -105,16 +108,10 @@ export async function checkFeeds (_event: ScheduledJobEvent, context: TriggerCon
             actionPromises.push(alertByStickyComment(actionStickyCommentOption, post, context));
         }
 
-        actionPromises.push(context.redis.zAdd(ALERTED_POSTS_KEY, {member: post.post.id, score: new Date().getTime()}));
+        actionPromises.push(context.redis.set(`alerted~${post.post.id}`, "true", {expiration: addDays(new Date(), 3)}));
     }
 
     await Promise.all(actionPromises);
-
-    // Now remove records of posts that hit trending feeds at least three days ago.
-    const oldAlreadyAlertedPostsToPurge = alreadyAlertedPosts.filter(x => new Date(x.score) < subDays(new Date(), 3)).map(x => x.member);
-    if (oldAlreadyAlertedPostsToPurge.length > 0) {
-        await context.redis.zRem(ALERTED_POSTS_KEY, oldAlreadyAlertedPostsToPurge);
-    }
 }
 
 async function alertByModmail (posts: PostFound[], subredditName: string, context: TriggerContext) {

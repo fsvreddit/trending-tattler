@@ -1,4 +1,4 @@
-import {SettingsFormField} from "@devvit/public-api";
+import {SettingsFormField, SettingsFormFieldValidatorEvent} from "@devvit/public-api";
 
 export enum AppSetting {
     FeedsToMonitor = "feedsToMonitor",
@@ -31,6 +31,12 @@ export enum StickyCommentOption {
     None = "none",
     AddIfNone = "addifnone",
     AddAlways = "addalways",
+}
+
+function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>): void | string {
+    if (!event.value || event.value.length !== 1) {
+        return "You must choose an option";
+    }
 }
 
 export const appSettings: SettingsFormField[] = [
@@ -127,6 +133,7 @@ export const appSettings: SettingsFormField[] = [
                         ],
                         multiSelect: false,
                         defaultValue: [SetFlairOption.None],
+                        onValidate: selectFieldHasOptionChosen,
                     },
                     {
                         type: "string",
@@ -161,6 +168,7 @@ export const appSettings: SettingsFormField[] = [
                         ],
                         multiSelect: false,
                         defaultValue: [StickyCommentOption.None],
+                        onValidate: selectFieldHasOptionChosen,
                     },
                     {
                         type: "paragraph",

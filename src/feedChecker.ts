@@ -50,14 +50,13 @@ export async function checkFeeds (_event: ScheduledJobEvent, context: TriggerCon
     }
 
     const numberOfPostsToCheck = settings[AppSetting.NumberOfPostsToCheck] as number ?? 100;
-    const currentSubredditName = await getSubredditName(context);
 
     const foundPosts: PostFound[] = [];
 
     const results = await Promise.all(feedsToMonitor.map(feed => getResultsForFeed(feed, numberOfPostsToCheck, context)));
     const flatResults = _.flatten(results);
 
-    for (const item of flatResults.filter(post => post.post.subredditName === currentSubredditName)) {
+    for (const item of flatResults.filter(post => post.post.subredditId === context.subredditId)) {
         const existingFoundPost = foundPosts.find(existingPost => existingPost.post.id === item.post.id);
         if (existingFoundPost) {
             existingFoundPost.foundInFeed.push(item.foundInFeed[0]);
@@ -88,6 +87,7 @@ export async function checkFeeds (_event: ScheduledJobEvent, context: TriggerCon
     const actionPromises: Promise<unknown>[] = [];
 
     if (actionSendModmail) {
+        const currentSubredditName = await getSubredditName(context);
         actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubredditName, context));
     }
 

@@ -53,7 +53,7 @@ This gives you the option to create a sticky comment on the post as a "welcome" 
 
 ### Recent changes
 
-v1.3 adds the ability to suppress embeds in Discord notifications
+v1.3 adds the ability to suppress embeds in Discord notifications, and adds "I am a bot" boilerplate text on all comments made by the app if that option is in use.
 
 v1.2 added the ability to add a sticky comment on trending posts
 

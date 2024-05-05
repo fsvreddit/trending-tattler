@@ -1,6 +1,5 @@
 import {Post, ScheduledJobEvent, TriggerContext} from "@devvit/public-api";
 import {AppSetting, SetFlairOption, StickyCommentOption} from "./settings.js";
-import {getSubredditName} from "./utility.js";
 import {addDays} from "date-fns";
 import _ from "lodash";
 
@@ -87,8 +86,8 @@ export async function checkFeeds (_event: ScheduledJobEvent, context: TriggerCon
     const actionPromises: Promise<unknown>[] = [];
 
     if (actionSendModmail) {
-        const currentSubredditName = await getSubredditName(context);
-        actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubredditName, context));
+        const currentSubreddit = await context.reddit.getCurrentSubreddit();
+        actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubreddit.name, context));
     }
 
     if (actionSendDiscordMessage) {

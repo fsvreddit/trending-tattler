@@ -237,10 +237,12 @@ async function alertByStickyComment (stickyCommentAction: string, post: PostFoun
         }
     }
 
-    const commentText = await context.settings.get<string>(AppSetting.ActionStickyCommentContent);
+    let commentText = await context.settings.get<string>(AppSetting.ActionStickyCommentContent);
     if (!commentText) {
         return;
     }
+
+    commentText = `${commentText.trim()}\n\n*I am a bot, and this action was performed automatically. Please [contact the moderators of this subreddit](/message/compose/?to=/r/${post.post.subredditName}) if you have any questions or concerns.*`;
 
     const newComment = await post.post.addComment({text: commentText});
     await newComment.distinguish(true);

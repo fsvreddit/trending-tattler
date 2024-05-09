@@ -1,1 +1,64 @@
-Alerts subreddit moderators when a post hits high traffic feeds via modmail, reports on posts or by setting flair. For usage guide see https://www.reddit.com/r/fsvapps/wiki/trendingtattler
+# Trending Tattler
+
+A Reddit Community App to alert subreddit moderators when a post hits a high traffic feed (i.e. /r/all, /r/popular). This can help you prepare for the extra workload of moderating a post that is liable to get busy fast.
+
+The app runs on a schedule, every 30 minutes. It checks the top posts in the high traffic feeds (configurable), and if there are any present from the subreddit the app is installed in it, will take action.
+
+Action will only be taken on a post once every three days, so if a post remains in the high traffic feed for a long period of time only one alert will be sent.
+
+## Detection options
+
+You can choose to monitor /r/all, /r/popular, or both.
+
+You can choose how many posts to look back in these feeds, the default is 100 but you can configure the app to look back up to 200 posts.
+
+## Action options
+
+More than one action option can be selected at a time. If no options are set at all, the app will not check high traffic feeds until one is enabled.
+
+### Modmail
+
+If enabled, this will send a modmail with details of each post that has been newly found in the high traffic feed. 
+
+![Example modmail](https://raw.githubusercontent.com/fsvreddit/trending-tattler/main/doc_images/modmail.png)
+
+## Send Discord Notification
+
+If enabled, this will send a message to the Discord webhook specified. To learn how to create a webhook, follow [this guide](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks), and use the "Copy Webhook URL" button within Discord and paste the URL into this app's configuration screen.
+
+![Example notification](https://raw.githubusercontent.com/fsvreddit/trending-tattler/main/doc_images/discord.png)
+
+If Suppress Embeds is turned off, Discord may include an embed with a preview of the post. You can force this off if you wish with this option.
+
+### Report
+
+If enabled, this will report the post, making it obvious in the modqueue that the post has hit the high traffic feed.
+
+![Example report](https://raw.githubusercontent.com/fsvreddit/trending-tattler/main/doc_images/report.png)
+
+### Flair
+
+This will set a flair on the post. This may be useful for alerting your users, but can also allow you to react to trending posts differently in automod rules or other bots that you may have running. 
+
+If you want to use this setting, I recommend using one of these options:
+
+* Flair text on its own (applies the text with default cosmetic settings)
+* Flair text and CSS class combined (applies the text using the cosmetic settings of the CSS class)
+* Flair text and flair template (applies the text using the cosmetic settings for the flair template)
+* Flair template on its own (uses the flair text from the template)
+
+### Sticky Comment
+
+This gives you the option to create a sticky comment on the post as a "welcome" to people who might need a reminder of your subreddit's rules. You can choose to sticky a new comment regardless of whether there is one already present, or choose to only sticky a new comment if there's not one there already.
+
+### Recent changes
+
+v1.3 adds the ability to suppress embeds in Discord notifications, and adds "I am a bot" boilerplate text on all comments made by the app if that option is in use.
+
+v1.2 added the ability to add a sticky comment on trending posts
+
+v1.1 added Discord notifications 
+
+### Source code
+
+Trending Tattler is open source. You can find it on Github [here](https://github.com/fsvreddit/trending-tattler).

@@ -151,16 +151,25 @@ async function alertByDiscord (posts: PostFound[], context: TriggerContext) {
 
     let message = "There are posts newly showing in trending feeds!\n";
     for (const post of posts) {
-        if (suppressEmbeds) {
+        if (webhookUrl.includes("slack.com")) {
+            message += `* ${post.post.permalink} (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
+        } else if (suppressEmbeds) {
             message += `* [${post.post.title}](<https://www.reddit.com${post.post.permalink}>) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
         } else {
             message += `* [${post.post.title}](https://www.reddit.com${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
         }
     }
 
-    const params = {
-        content: message,
-    };
+    let params;
+    if (webhookUrl.includes("discordapp.com")) {
+        params = {
+            content: message,
+        };
+    } else {
+        params = {
+            text: message,
+        };
+    }
 
     try {
         await fetch(

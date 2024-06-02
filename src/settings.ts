@@ -99,11 +99,11 @@ export const appSettings: SettingsFormField[] = [
                     {
                         type: "string",
                         name: AppSetting.ActionDiscordWebhookUrl,
-                        label: "Discord Webhook URL",
+                        label: "Discord/Slack Webhook URL",
                         onValidate: ({value}) => {
-                            const webhookRegex = /^https:\/\/discord.com\/api\/webhooks\//;
+                            const webhookRegex = /^https:\/\/(?:discord.com\/api\/webhooks\/|hooks.slack.com\/services)/;
                             if (value && !webhookRegex.test(value)) {
-                                return "Please enter a valid Discord webhook URL";
+                                return "Please enter a valid Discord or Slack webhook URL";
                             }
                         },
                     },
@@ -111,7 +111,7 @@ export const appSettings: SettingsFormField[] = [
                         type: "boolean",
                         name: AppSetting.ActionDiscordSuppressEmbeds,
                         label: "Suppress Embeds",
-                        helpText: "Controls whether Discord will display embeds with alerts. Turn this on to reduce clutter.",
+                        helpText: "Controls whether Discord will display embeds with alerts. Turn this on to reduce clutter. Has no effect on Slack webhooks.",
                         defaultValue: false,
                     },
                 ],

@@ -18,15 +18,13 @@ More than one action option can be selected at a time. If no options are set at 
 
 ### Modmail
 
-If enabled, this will send a modmail with details of each post that has been newly found in the high traffic feed. 
+If enabled, this will send a modmail with details of each post that has been newly found in the high traffic feed.
 
 ![Example modmail](https://raw.githubusercontent.com/fsvreddit/trending-tattler/main/doc_images/modmail.png)
 
-Note: By default, these notifications will go to the "Mod Discussions" inbox. If you want these to appear in the main inbox, you need to edit the app's permissions to remove "modmail" permissions.
-
 ## Send Discord or Slack Notification
 
-If enabled, this will send a message to the Discord webhook specified. 
+If enabled, this will send a message to the Discord webhook specified.
 
 To learn how to create a Discord webhook, follow [this guide](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks), and use the "Copy Webhook URL" button within Discord and paste the URL into this app's configuration screen.
 
@@ -44,7 +42,7 @@ If enabled, this will report the post, making it obvious in the modqueue that th
 
 ### Flair
 
-This will set a flair on the post. This may be useful for alerting your users, but can also allow you to react to trending posts differently in automod rules or other bots that you may have running. 
+This will set a flair on the post. This may be useful for alerting your users, but can also allow you to react to trending posts differently in automod rules or other bots that you may have running.
 
 If you want to use this setting, I recommend using one of these options:
 
@@ -69,21 +67,35 @@ Note: Test Mode is not available on Old Reddit or third-party Reddit clients due
 
 ## Recent changes
 
-v1.5.1:
+### v1.5.2
+
+* Modmail notifications now go to inbox
+
+### v1.5.1
 
 * Add "Test Mode" to allow mods to test out config before a post actually hits a trending feed
 * Add support for limiting trending feed detection to specific locations
 * Code improvements
 
-v1.4.3 fixes an issue with Discord webhook support
+### v1.4.3
 
-v1.4.2 adds Slack webhook support.
+* fixes an issue with Discord webhook support
 
-v1.3 adds the ability to suppress embeds in Discord notifications, and adds "I am a bot" boilerplate text on all comments made by the app if that option is in use.
+### v1.4.2
 
-v1.2 added the ability to add a sticky comment on trending posts
+* adds Slack webhook support.
 
-v1.1 added Discord notifications 
+### v1.3
+
+* Adds the ability to suppress embeds in Discord notifications, and adds "I am a bot" boilerplate text on all comments made by the app if that option is in use.
+
+### v1.2
+
+* Added the ability to add a sticky comment on trending posts
+
+### v1.1
+
+* Added Discord notifications
 
 ## Source code
 

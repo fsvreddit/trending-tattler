@@ -1,4 +1,4 @@
-import { Context, FormOnSubmitEvent, MenuItemOnPressEvent, Post, ScheduledJobEvent, SettingsValues, TriggerContext } from "@devvit/public-api";
+import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, Post, ScheduledJobEvent, SettingsValues, TriggerContext } from "@devvit/public-api";
 import { AppSetting, HotPostLocation, SetFlairOption, StickyCommentOption } from "./settings.js";
 import { addDays } from "date-fns";
 import _ from "lodash";
@@ -22,7 +22,7 @@ export async function getResultsForFeed (feed: string, numberOfPostsToCheck: num
     return posts.map(post => ({ post, foundInFeed: [feed] }));
 }
 
-export async function checkFeeds (event: ScheduledJobEvent, context: TriggerContext) {
+export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefined>, context: TriggerContext) {
     const settings = await context.settings.getAll();
 
     const feedsToMonitor = settings[AppSetting.FeedsToMonitor] as string[] | undefined ?? [];
@@ -72,9 +72,9 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
 
     if (event.data?.testMode) {
         // Get a random post on subreddit, and treat it as if it is trending in a fictional subreddit
-        const currentSubreddit = await context.reddit.getCurrentSubreddit();
+        const currentSubredditName = context.subredditName ?? (await context.reddit.getCurrentSubreddit()).name;
         const posts = await context.reddit.getHotPosts({
-            subredditName: currentSubreddit.name,
+            subredditName: currentSubredditName,
             limit: 100,
         }).all();
 
@@ -109,8 +109,8 @@ export async function checkFeeds (event: ScheduledJobEvent, context: TriggerCont
     const actionPromises: Promise<unknown>[] = [];
 
     if (actionSendModmail) {
-        const currentSubreddit = await context.reddit.getCurrentSubreddit();
-        actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubreddit.name, context));
+        const currentSubredditName = context.subredditName ?? (await context.reddit.getCurrentSubreddit()).name;
+        actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubredditName, context));
     }
 
     if (actionSendDiscordMessage) {
@@ -143,20 +143,16 @@ async function alertByModmail (posts: PostFound[], subredditName: string, contex
         return;
     }
 
-    const botAccount = await context.reddit.getAppUser();
-
     let message = "Here are the posts that are newly showing in trending feeds:\n\n";
 
     for (const post of posts) {
         message += `* [${post.post.title}](${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
     }
 
-    await context.reddit.modMail.createConversation({
-        to: botAccount.username,
+    await context.reddit.modMail.createModInboxConversation({
+        subredditId: context.subredditId,
         subject: "Notification of posts on trending feeds",
-        body: message,
-        isAuthorHidden: true,
-        subredditName,
+        bodyMarkdown: message,
     });
 
     console.log("Modmail sent");
@@ -283,7 +279,7 @@ async function alertByStickyComment (stickyCommentAction: StickyCommentOption, p
     console.log("Sticky comment left");
 }
 
-export async function confirmationFormHander (event: FormOnSubmitEvent, context: Context) {
+export async function confirmationFormHander (event: FormOnSubmitEvent<JSONObject>, context: Context) {
     if (!event.values.confirm) {
         return;
     }

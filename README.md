@@ -67,6 +67,10 @@ Note: Test Mode is not available on Old Reddit or third-party Reddit clients due
 
 ## Recent changes
 
+### v1.5.3
+
+* Fixed a security vulnerability relating to menu items
+
 ### v1.5.2
 
 * Modmail notifications now go to inbox

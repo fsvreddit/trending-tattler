@@ -67,6 +67,10 @@ Note: Test Mode is not available on Old Reddit or third-party Reddit clients due
 
 ## Recent changes
 
+### v1.5.4
+
+* Add feature to allow placeholder for feed name(s) in sticky comments and flair text
+
 ### v1.5.3
 
 * Fixed a security vulnerability relating to menu items

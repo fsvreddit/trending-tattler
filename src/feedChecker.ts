@@ -220,6 +220,10 @@ async function alertByFlair (flairAction: SetFlairOption, post: PostFound, conte
         actionFlairText = undefined;
     }
 
+    if (actionFlairText) {
+        actionFlairText = actionFlairText.replace("{{feeds}}", post.foundInFeed.map(feed => `/r/${feed}`).join(", "));
+    }
+
     let actionFlairCssClass = settings[AppSetting.ActionFlairCssClass] as string | undefined;
     if (actionFlairCssClass === "") {
         actionFlairCssClass = undefined;
@@ -271,6 +275,8 @@ async function alertByStickyComment (stickyCommentAction: StickyCommentOption, p
     if (!commentText) {
         return;
     }
+
+    commentText = commentText.replace("{{feeds}}", post.foundInFeed.map(feed => `/r/${feed}`).join(", "));
 
     commentText = `${commentText.trim()}\n\n*I am a bot, and this action was performed automatically. Please [contact the moderators of this subreddit](/message/compose/?to=/r/${post.post.subredditName}) if you have any questions or concerns.*`;
 

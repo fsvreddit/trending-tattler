@@ -190,6 +190,7 @@ export const appSettings: SettingsFormField[] = [
                         type: "string",
                         name: AppSetting.ActionFlairText,
                         label: "Flair text",
+                        helpText: "Supports {{feeds}} placeholder which will substitute in with the name of the feed(s) that the post is trending in. If more than one feed is found, the feeds will be listed separated by a comma.",
                     },
                     {
                         type: "string",
@@ -225,7 +226,7 @@ export const appSettings: SettingsFormField[] = [
                         type: "paragraph",
                         name: AppSetting.ActionStickyCommentContent,
                         label: "Sticky Comment Text",
-                        helpText: "The text to include in the sticky comment",
+                        helpText: "The text to include in the sticky comment. Supports {{feeds}} placeholder which will substitute in with the name of the feed(s) that the post is trending in. If more than one feed is found, the feeds will be listed separated by a comma.",
                     },
                 ],
             },

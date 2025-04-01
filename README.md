@@ -55,6 +55,10 @@ If you want to use this setting, I recommend using one of these options:
 
 This gives you the option to create a sticky comment on the post as a "welcome" to people who might need a reminder of your subreddit's rules. You can choose to sticky a new comment regardless of whether there is one already present, or choose to only sticky a new comment if there's not one there already.
 
+### Crowd Control
+
+This gives you the option to set Crowd Control to the level of your choosing. If this is turned on, Crowd Control's level will be set to this value, even if Crowd Control is set.
+
 ## Test Mode
 
 Test Mode takes a random post on your subreddit and treats it as if it is trending in /r/testing, and alerts based on the option configured. This allows you to test your configuration to ensure that the options are set up to your liking.
@@ -66,6 +70,10 @@ If you have actions configured that are visible on the subreddit (post flairs, s
 Note: Test Mode is not available on Old Reddit or third-party Reddit clients due to limitations of Devvit. You will need to use the official Reddit app, or a more modern desktop experience.
 
 ## Recent changes
+
+### v1.6
+
+* Add ability to set Crowd Control on posts that hit trending feeds
 
 ### v1.5.4
 

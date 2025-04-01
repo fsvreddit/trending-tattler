@@ -247,6 +247,7 @@ export const appSettings: SettingsFormField[] = [
                         type: "select",
                         name: AppSetting.ActionSetCrowdControl,
                         label: "Set Crowd Control",
+                        helpText: "If an option is chosen, any crowd control settings on the post will be overwritten unless 'Don't set' is chosen",
                         options: [
                             { label: "Don't set", value: CrowdControlOption.None },
                             { label: "Off", value: CrowdControlOption.Off },
@@ -255,6 +256,7 @@ export const appSettings: SettingsFormField[] = [
                             { label: "Maximum filtering", value: CrowdControlOption.Maximum },
                         ],
                         defaultValue: [CrowdControlOption.None],
+                        multiSelect: false,
                     },
                 ],
             },

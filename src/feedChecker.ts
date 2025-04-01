@@ -1,8 +1,9 @@
 import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, Post, ScheduledJobEvent, SettingsValues, TriggerContext } from "@devvit/public-api";
-import { AppSetting, HotPostLocation, SetFlairOption, StickyCommentOption } from "./settings.js";
+import { AppSetting, CrowdControlOption, HotPostLocation, SetFlairOption, StickyCommentOption } from "./settings.js";
 import { addDays } from "date-fns";
 import _ from "lodash";
 import { testModeConfirmationForm } from "./main.js";
+import { getExtendedDevvit } from "./extendedDevvit.js";
 
 interface PostFound {
     post: Post;
@@ -48,8 +49,10 @@ export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefine
         actionStickyCommentOption = actionCreateStickyComment[0] as StickyCommentOption;
     }
 
+    const [actionSetCrowdControl] = settings[AppSetting.ActionSetCrowdControl] as [CrowdControlOption] | undefined ?? [CrowdControlOption.None];
+
     // Are any actions defined? You'd hope so, but check and quit if not.
-    if (!actionSendModmail && !actionSendDiscordMessage && !actionReportPost && flairAction === SetFlairOption.None && actionStickyCommentOption === StickyCommentOption.None) {
+    if (!actionSendModmail && !actionSendDiscordMessage && !actionReportPost && flairAction === SetFlairOption.None && actionStickyCommentOption === StickyCommentOption.None && actionSetCrowdControl === CrowdControlOption.None) {
         console.log("No actions are set. No point checking for trending posts.");
         return;
     }
@@ -132,6 +135,10 @@ export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefine
 
         if (post.foundInFeed.some(sub => sub !== "testing")) {
             actionPromises.push(context.redis.set(`alerted~${post.post.id}`, "true", { expiration: addDays(new Date(), 3) }));
+        }
+
+        if (actionSetCrowdControl !== CrowdControlOption.None) {
+            actionPromises.push(setCrowdControl(post.post, actionSetCrowdControl, context));
         }
     }
 
@@ -283,6 +290,29 @@ async function alertByStickyComment (stickyCommentAction: StickyCommentOption, p
     const newComment = await post.post.addComment({ text: commentText });
     await newComment.distinguish(true);
     console.log("Sticky comment left");
+}
+
+async function setCrowdControl (post: Post, crowdControlOption: CrowdControlOption, context: TriggerContext) {
+    let level: number;
+    switch (crowdControlOption) {
+        case CrowdControlOption.Off:
+            level = 0;
+            break;
+        case CrowdControlOption.Moderate:
+            level = 1;
+            break;
+        case CrowdControlOption.High:
+            level = 2;
+            break;
+        case CrowdControlOption.Maximum:
+            level = 3;
+            break;
+        default:
+            return;
+    }
+
+    await getExtendedDevvit().redditAPIPlugins.Moderation.UpdateCrowdControlLevel({ id: post.id, level }, context.debug.metadata);
+    console.log(`Crowd control level set to ${crowdControlOption}`);
 }
 
 export async function confirmationFormHander (event: FormOnSubmitEvent<JSONObject>, context: Context) {

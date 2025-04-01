@@ -15,6 +15,7 @@ export enum AppSetting {
     ActionFlairTemplateId = "actionFlairTemplateId",
     ActionStickyCommentOption = "actionStickyCommentOption",
     ActionStickyCommentContent = "actionStickyCommmentContent", // This has a typo but fixing will break installed apps.
+    ActionSetCrowdControl = "actionSetCrowdControl",
 }
 
 enum TrendingFeed {
@@ -32,6 +33,14 @@ export enum StickyCommentOption {
     None = "none",
     AddIfNone = "addifnone",
     AddAlways = "addalways",
+}
+
+export enum CrowdControlOption {
+    None = "ignore",
+    Off = "0",
+    Moderate = "1",
+    High = "2",
+    Maximum = "3",
 }
 
 export enum HotPostLocation {
@@ -227,6 +236,25 @@ export const appSettings: SettingsFormField[] = [
                         name: AppSetting.ActionStickyCommentContent,
                         label: "Sticky Comment Text",
                         helpText: "The text to include in the sticky comment. Supports {{feeds}} placeholder which will substitute in with the name of the feed(s) that the post is trending in. If more than one feed is found, the feeds will be listed separated by a comma.",
+                    },
+                ],
+            },
+            {
+                type: "group",
+                label: "Crowd control options",
+                fields: [
+                    {
+                        type: "select",
+                        name: AppSetting.ActionSetCrowdControl,
+                        label: "Set Crowd Control",
+                        options: [
+                            { label: "Don't set", value: CrowdControlOption.None },
+                            { label: "Off", value: CrowdControlOption.Off },
+                            { label: "Moderate filtering", value: CrowdControlOption.Moderate },
+                            { label: "High filtering", value: CrowdControlOption.High },
+                            { label: "Maximum filtering", value: CrowdControlOption.Maximum },
+                        ],
+                        defaultValue: [CrowdControlOption.None],
                     },
                 ],
             },

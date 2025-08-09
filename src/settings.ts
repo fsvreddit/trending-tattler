@@ -15,6 +15,7 @@ export enum AppSetting {
     ActionFlairTemplateId = "actionFlairTemplateId",
     ActionStickyCommentOption = "actionStickyCommentOption",
     ActionStickyCommentContent = "actionStickyCommmentContent", // This has a typo but fixing will break installed apps.
+    ActionStickyCommentLock = "actionStickyCommentLock",
     ActionSetCrowdControl = "actionSetCrowdControl",
 }
 
@@ -236,6 +237,13 @@ export const appSettings: SettingsFormField[] = [
                         name: AppSetting.ActionStickyCommentContent,
                         label: "Sticky Comment Text",
                         helpText: "The text to include in the sticky comment. Supports {{feeds}} placeholder which will substitute in with the name of the feed(s) that the post is trending in. If more than one feed is found, the feeds will be listed separated by a comma.",
+                    },
+                    {
+                        type: "boolean",
+                        name: AppSetting.ActionStickyCommentLock,
+                        label: "Lock Sticky Comment",
+                        helpText: "If enabled, the sticky comment will be locked after creation.",
+                        defaultValue: true,
                     },
                 ],
             },

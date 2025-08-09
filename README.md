@@ -71,6 +71,10 @@ Note: Test Mode is not available on Old Reddit or third-party Reddit clients due
 
 ## Recent changes
 
+### v1.7
+
+* Add option (on by default) to lock sticky comments made by the app
+
 ### v1.6
 
 * Add ability to set Crowd Control on posts that hit trending feeds

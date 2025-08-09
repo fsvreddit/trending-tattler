@@ -130,7 +130,7 @@ export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefine
         }
 
         if (actionStickyCommentOption !== StickyCommentOption.None) {
-            actionPromises.push(alertByStickyComment(actionStickyCommentOption, post, context, settings));
+            actionPromises.push(alertByStickyComment(actionStickyCommentOption, post, settings));
         }
 
         if (post.foundInFeed.some(sub => sub !== "testing")) {
@@ -270,7 +270,7 @@ async function alertByFlair (flairAction: SetFlairOption, post: PostFound, conte
     }
 }
 
-async function alertByStickyComment (stickyCommentAction: StickyCommentOption, post: PostFound, context: TriggerContext, settings: SettingsValues) {
+async function alertByStickyComment (stickyCommentAction: StickyCommentOption, post: PostFound, settings: SettingsValues) {
     if (stickyCommentAction === StickyCommentOption.AddIfNone) {
         const comments = await post.post.comments.all();
         if (comments.some(comment => comment.isStickied())) {
@@ -289,6 +289,9 @@ async function alertByStickyComment (stickyCommentAction: StickyCommentOption, p
 
     const newComment = await post.post.addComment({ text: commentText });
     await newComment.distinguish(true);
+    if (settings[AppSetting.ActionStickyCommentLock]) {
+        await newComment.lock();
+    }
     console.log("Sticky comment left");
 }
 

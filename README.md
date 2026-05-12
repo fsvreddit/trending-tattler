@@ -2,7 +2,7 @@
 
 A Reddit Community App to alert subreddit moderators when a post hits a high traffic feed (i.e. /r/all, /r/popular). This can help you prepare for the extra workload of moderating a post that is liable to get busy fast.
 
-The app runs on a schedule, every 30 minutes. It checks the top posts in the high traffic feeds (configurable), and if there are any present from the subreddit the app is installed in it, will take action.
+The app runs on a schedule, every 15 minutes. It checks the top posts in the high traffic feeds (configurable), and if there are any present from the subreddit the app is installed in it, will take action.
 
 Action will only be taken on a post once every three days, so if a post remains in the high traffic feed for a long period of time only one alert will be sent.
 
@@ -71,6 +71,10 @@ Note: Test Mode is not available on Old Reddit or third-party Reddit clients due
 
 ## Recent changes
 
+### v1.7.2
+
+* Update Devvit and dependencies. No user facing changes in this version.
+
 ### v1.7
 
 * Add option (on by default) to lock sticky comments made by the app
@@ -119,4 +123,4 @@ Note: Test Mode is not available on Old Reddit or third-party Reddit clients due
 
 ## Source code
 
-Trending Tattler is open source. You can find it on Github [here](https://github.com/fsvreddit/trending-tattler).
+Trending Tattler is open source. [You can find it on Github here](https://github.com/fsvreddit/trending-tattler).

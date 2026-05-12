@@ -1,14 +1,12 @@
-import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, Post, ScheduledJobEvent, SettingsValues, TriggerContext } from "@devvit/public-api";
-import { AppSetting, CrowdControlOption, HotPostLocation, SetFlairOption, StickyCommentOption } from "./settings.js";
+import { Context, FormOnSubmitEvent, JSONObject, MenuItemOnPressEvent, Post, ScheduledJobEvent, TriggerContext } from "@devvit/public-api";
+import { AppSetting, HotPostLocation, SetFlairOption, StickyCommentOption } from "./settings.js";
 import { addDays } from "date-fns";
 import _ from "lodash";
 import { testModeConfirmationForm } from "./main.js";
-import { getExtendedDevvit } from "./extendedDevvit.js";
-
-interface PostFound {
-    post: Post;
-    foundInFeed: string[];
-}
+import { CrowdControlOption, setCrowdControl } from "@fsvreddit/fsv-devvit-helpers";
+import { PostFound } from "./types.js";
+import { alertByDiscord, alertByFlair, alertByModmail, alertByReport, alertByStickyComment } from "./alerting/index.js";
+import pluralize from "pluralize";
 
 // Definition taken from GetHotPostsOptions.
 type HotPostLocationVal = "GLOBAL" | "US" | "AR" | "AU" | "BG" | "CA" | "CL" | "CO" | "HR" | "CZ" | "FI" | "FR" | "DE" | "GR" | "HU" | "IS" | "IN" | "IE" | "IT" | "JP" | "MY" | "MX" | "NZ" | "PH" | "PL" | "PT" | "PR" | "RO" | "RS" | "SG" | "ES" | "SE" | "TW" | "TH" | "TR" | "GB" | "US_WA" | "US_DE" | "US_DC" | "US_WI" | "US_WV" | "US_HI" | "US_FL" | "US_WY" | "US_NH" | "US_NJ" | "US_NM" | "US_TX" | "US_LA" | "US_NC" | "US_ND" | "US_NE" | "US_TN" | "US_NY" | "US_PA" | "US_CA" | "US_NV" | "US_VA" | "US_CO" | "US_AK" | "US_AL" | "US_AR" | "US_VT" | "US_IL" | "US_GA" | "US_IN" | "US_IA" | "US_OK" | "US_AZ" | "US_ID" | "US_CT" | "US_ME" | "US_MD" | "US_MA" | "US_OH" | "US_UT" | "US_MO" | "US_MN" | "US_MI" | "US_RI" | "US_KS" | "US_MT" | "US_MS" | "US_SC" | "US_KY" | "US_OR" | "US_SD";
@@ -21,6 +19,10 @@ export async function getResultsForFeed (feed: string, numberOfPostsToCheck: num
     }).all();
 
     return posts.map(post => ({ post, foundInFeed: [feed] }));
+}
+
+function getAlertedKeyForPost (post: Post) {
+    return `alerted~${post.id}`;
 }
 
 export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefined>, context: TriggerContext) {
@@ -90,30 +92,33 @@ export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefine
     }
 
     if (foundPosts.length === 0) {
-        console.log("No posts found in trending feeds");
+        let message = `No posts found in trending feeds - checked ${feedsToMonitor.join(", ")}`;
+        if (hotPostLocation !== HotPostLocation.Everywhere as string) {
+            message += `, location ${hotPostLocation}`;
+        }
+        console.log(message);
         return;
     }
 
     const foundPostsNotAlerted: PostFound[] = [];
     for (const post of foundPosts) {
-        const alreadyAlerted = await context.redis.get(`alerted~${post.post.id}`);
+        const alreadyAlerted = await context.redis.get(getAlertedKeyForPost(post.post));
         if (!alreadyAlerted) {
             foundPostsNotAlerted.push(post);
         }
     }
 
     if (foundPostsNotAlerted.length === 0) {
-        console.log("There are posts currently in trending feeds, but they have already been handled");
+        console.log(`There are ${foundPostsNotAlerted.length} ${pluralize("post", foundPostsNotAlerted.length)} currently in trending feeds, but they have already been handled`);
         return;
     }
 
-    console.log(`Posts in trending feeds: ${foundPostsNotAlerted.length}`);
+    console.log(`Posts in trending feeds: ${foundPostsNotAlerted.map(post => post.post.id).join(", ")}`);
 
     const actionPromises: Promise<unknown>[] = [];
 
     if (actionSendModmail) {
-        const currentSubredditName = context.subredditName ?? (await context.reddit.getCurrentSubreddit()).name;
-        actionPromises.push(alertByModmail(foundPostsNotAlerted, currentSubredditName, context));
+        actionPromises.push(alertByModmail(foundPostsNotAlerted, context));
     }
 
     if (actionSendDiscordMessage) {
@@ -134,7 +139,7 @@ export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefine
         }
 
         if (post.foundInFeed.some(sub => sub !== "testing")) {
-            actionPromises.push(context.redis.set(`alerted~${post.post.id}`, "true", { expiration: addDays(new Date(), 3) }));
+            actionPromises.push(context.redis.set(getAlertedKeyForPost(post.post), "true", { expiration: addDays(new Date(), 3) }));
         }
 
         if (actionSetCrowdControl !== CrowdControlOption.None) {
@@ -143,179 +148,6 @@ export async function checkFeeds (event: ScheduledJobEvent<JSONObject | undefine
     }
 
     await Promise.all(actionPromises);
-}
-
-async function alertByModmail (posts: PostFound[], subredditName: string, context: TriggerContext) {
-    if (posts.length === 0) {
-        return;
-    }
-
-    let message = "Here are the posts that are newly showing in trending feeds:\n\n";
-
-    for (const post of posts) {
-        message += `* [${post.post.title}](${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
-    }
-
-    await context.reddit.modMail.createModInboxConversation({
-        subredditId: context.subredditId,
-        subject: "Notification of posts on trending feeds",
-        bodyMarkdown: message,
-    });
-
-    console.log("Modmail sent");
-}
-
-async function alertByDiscord (posts: PostFound[], settings: SettingsValues) {
-    if (posts.length === 0) {
-        return;
-    }
-
-    const webhookUrl = settings[AppSetting.ActionDiscordWebhookUrl] as string | undefined;
-    if (!webhookUrl) {
-        return;
-    }
-
-    const suppressEmbeds = settings[AppSetting.ActionDiscordSuppressEmbeds] as boolean | undefined ?? false;
-
-    let message = "There are posts newly showing in trending feeds!\n";
-    for (const post of posts) {
-        if (webhookUrl.includes("slack.com")) {
-            message += `* ${post.post.permalink} (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
-        } else if (suppressEmbeds) {
-            message += `* [${post.post.title}](<https://www.reddit.com${post.post.permalink}>) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
-        } else {
-            message += `* [${post.post.title}](https://www.reddit.com${post.post.permalink}) (${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")})\n`;
-        }
-    }
-
-    let params;
-    if (webhookUrl.includes("discord.com")) {
-        params = {
-            content: message,
-        };
-    } else {
-        params = {
-            text: message,
-        };
-    }
-
-    try {
-        await fetch(
-            webhookUrl,
-            {
-                method: "post",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(params),
-            },
-        );
-        console.log("Alert sent to webhook");
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-async function alertByReport (post: PostFound, context: TriggerContext) {
-    await context.reddit.report(post.post, { reason: `This post is trending! It is currently in these feeds: ${post.foundInFeed.map(feed => `/r/${feed}`).join(", ")}` });
-    console.log("Post reported");
-}
-
-async function alertByFlair (flairAction: SetFlairOption, post: PostFound, context: TriggerContext, settings: SettingsValues) {
-    let actionFlairText = settings[AppSetting.ActionFlairText] as string | undefined;
-    if (actionFlairText === "") {
-        actionFlairText = undefined;
-    }
-
-    if (actionFlairText) {
-        actionFlairText = actionFlairText.replace("{{feeds}}", post.foundInFeed.map(feed => `/r/${feed}`).join(", "));
-    }
-
-    let actionFlairCssClass = settings[AppSetting.ActionFlairCssClass] as string | undefined;
-    if (actionFlairCssClass === "") {
-        actionFlairCssClass = undefined;
-    }
-
-    let actionFlairTemplateId = settings[AppSetting.ActionFlairTemplateId] as string | undefined;
-    if (actionFlairTemplateId === "") {
-        actionFlairTemplateId = undefined;
-    } else if (actionFlairTemplateId) {
-        // Check to see if flair template exists for this site, if not then ignore.
-        const flairTemplates = await context.reddit.getPostFlairTemplates(post.post.subredditName);
-        if (!flairTemplates.some(x => x.id === actionFlairTemplateId)) {
-            actionFlairTemplateId = undefined;
-        }
-    }
-
-    if (!actionFlairText && !actionFlairCssClass) {
-        return;
-    }
-
-    if (flairAction === SetFlairOption.Set && post.post.flair?.text) {
-        // Flair already set.
-        return;
-    }
-
-    try {
-        await context.reddit.setPostFlair({
-            postId: post.post.id,
-            subredditName: post.post.subredditName,
-            text: actionFlairText,
-            cssClass: actionFlairCssClass,
-            flairTemplateId: actionFlairTemplateId,
-        });
-        console.log("Post flair set.");
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-async function alertByStickyComment (stickyCommentAction: StickyCommentOption, post: PostFound, settings: SettingsValues) {
-    if (stickyCommentAction === StickyCommentOption.AddIfNone) {
-        const comments = await post.post.comments.all();
-        if (comments.some(comment => comment.isStickied())) {
-            return;
-        }
-    }
-
-    let commentText = settings[AppSetting.ActionStickyCommentContent] as string | undefined;
-    if (!commentText) {
-        return;
-    }
-
-    commentText = commentText.replace("{{feeds}}", post.foundInFeed.map(feed => `/r/${feed}`).join(", "));
-
-    commentText = `${commentText.trim()}\n\n*I am a bot, and this action was performed automatically. Please [contact the moderators of this subreddit](/message/compose/?to=/r/${post.post.subredditName}) if you have any questions or concerns.*`;
-
-    const newComment = await post.post.addComment({ text: commentText });
-    await newComment.distinguish(true);
-    if (settings[AppSetting.ActionStickyCommentLock]) {
-        await newComment.lock();
-    }
-    console.log("Sticky comment left");
-}
-
-async function setCrowdControl (post: Post, crowdControlOption: CrowdControlOption, context: TriggerContext) {
-    let level: number;
-    switch (crowdControlOption) {
-        case CrowdControlOption.Off:
-            level = 0;
-            break;
-        case CrowdControlOption.Moderate:
-            level = 1;
-            break;
-        case CrowdControlOption.High:
-            level = 2;
-            break;
-        case CrowdControlOption.Maximum:
-            level = 3;
-            break;
-        default:
-            return;
-    }
-
-    await getExtendedDevvit().redditAPIPlugins.Moderation.UpdateCrowdControlLevel({ id: post.id, level }, context.debug.metadata);
-    console.log(`Crowd control level set to ${crowdControlOption}`);
 }
 
 export async function confirmationFormHander (event: FormOnSubmitEvent<JSONObject>, context: Context) {

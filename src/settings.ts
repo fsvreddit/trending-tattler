@@ -1,4 +1,5 @@
 import { SettingsFormField, SettingsFormFieldValidatorEvent } from "@devvit/public-api";
+import { CrowdControlOption } from "@fsvreddit/fsv-devvit-helpers";
 
 export enum AppSetting {
     FeedsToMonitor = "feedsToMonitor",
@@ -34,14 +35,6 @@ export enum StickyCommentOption {
     None = "none",
     AddIfNone = "addifnone",
     AddAlways = "addalways",
-}
-
-export enum CrowdControlOption {
-    None = "ignore",
-    Off = "0",
-    Moderate = "1",
-    High = "2",
-    Maximum = "3",
 }
 
 export enum HotPostLocation {
@@ -85,7 +78,7 @@ export enum HotPostLocation {
 
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 function selectFieldHasOptionChosen (event: SettingsFormFieldValidatorEvent<string[]>): void | string {
-    if (!event.value || event.value.length !== 1) {
+    if (event.value?.length !== 1) {
         return "You must choose an option";
     }
 }

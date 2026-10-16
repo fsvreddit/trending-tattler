@@ -1,4 +1,4 @@
-import { Post } from "@devvit/public-api";
+import { Post } from "@devvit/web/server";
 
 export interface PostFound {
     post: Post;

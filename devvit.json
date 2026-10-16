@@ -1,0 +1,233 @@
+{
+    "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+    "name": "trendingtattler",
+    "permissions": {
+        "http": {
+            "domains": [
+                "discord.com",
+                "discordapp.com"
+            ]
+        },
+        "reddit": true
+    },
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite build --watch"
+    },
+    "server": {
+        "dir": "dist/server",
+        "entry": "index.cjs"
+    },
+    "settings": {
+        "subreddit": {
+            "feedsToMonitor": {
+                "type": "multiSelect",
+                "label": "Feeds to monitor",
+                "options": [
+                    { "label": "/r/all", "value": "all" },
+                    { "label": "/r/popular", "value": "popular" }
+                ],
+                "defaultValue": [
+                    "all"
+                ],
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "numberOfPostsToCheck": {
+                "type": "number",
+                "label": "Number of posts to check in feeds",
+                "helpText": "The app will check this many posts from the feeds sorted by \"hot\"",
+                "defaultValue": 100,
+                "validationEndpoint": "/internal/validators/number-of-posts-to-check"
+            },
+            "location": {
+                "type": "select",
+                "label": "Check feeds in this location",
+                "helpText": "Most subreddits will find \"Everywhere\" the best option, but some subs might want to check for trending activity in a specific region.",
+                "options": [
+                    { "label": "Everywhere", "value": "GLOBAL" },
+                    { "label": "United States", "value": "US" },
+                    { "label": "Argentina", "value": "AR" },
+                    { "label": "Australia", "value": "AU" },
+                    { "label": "Bulgaria", "value": "BG" },
+                    { "label": "Canada", "value": "CA" },
+                    { "label": "Chile", "value": "CL" },
+                    { "label": "Colombia", "value": "CO" },
+                    { "label": "Croatia", "value": "HR" },
+                    { "label": "Czechia", "value": "CZ" },
+                    { "label": "Finland", "value": "FI" },
+                    { "label": "France", "value": "FR" },
+                    { "label": "Germany", "value": "DE" },
+                    { "label": "Greece", "value": "GR" },
+                    { "label": "Hungary", "value": "HU" },
+                    { "label": "Iceland", "value": "IS" },
+                    { "label": "India", "value": "IN" },
+                    { "label": "Ireland", "value": "IE" },
+                    { "label": "Italy", "value": "IT" },
+                    { "label": "Japan", "value": "JP" },
+                    { "label": "Malaysia", "value": "MY" },
+                    { "label": "Mexico", "value": "MX" },
+                    { "label": "New Zealand", "value": "NZ" },
+                    { "label": "Philippines", "value": "PH" },
+                    { "label": "Poland", "value": "PL" },
+                    { "label": "Portugal", "value": "PT" },
+                    { "label": "Puerto Rico", "value": "PR" },
+                    { "label": "Romania", "value": "RO" },
+                    { "label": "Serbia", "value": "RS" },
+                    { "label": "Singapore", "value": "SG" },
+                    { "label": "Spain", "value": "ES" },
+                    { "label": "Sweden", "value": "SE" },
+                    { "label": "Taiwan", "value": "TW" },
+                    { "label": "Thailand", "value": "TH" },
+                    { "label": "Türkiye", "value": "TR" },
+                    { "label": "United Kingdom", "value": "GB" }
+                ],
+                "defaultValue": "GLOBAL",
+                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+            },
+            "group_Actions": {
+                "type": "group",
+                "label": "Actions",
+                "fields": {
+                    "actionSendModmail": {
+                        "type": "boolean",
+                        "label": "Send Modmail",
+                        "helpText": "Sends a modmail with links to the post(s) found",
+                        "defaultValue": true
+                    },
+                    "actionReportPost": {
+                        "type": "boolean",
+                        "label": "Report Post",
+                        "helpText": "Reports post(s) that hit the specified feeds",
+                        "defaultValue": false
+                    },
+                    "group_Discord_Or_Slack_Notifications": {
+                        "type": "group",
+                        "label": "Discord or Slack Notifications",
+                        "fields": {
+                            "actionSendDiscordMessage": {
+                                "type": "boolean",
+                                "label": "Send Discord or Slack Notification",
+                                "helpText": "Send a notification to a Discord or Slack channel. Recommended use is for private moderation spaces only",
+                                "defaultValue": false
+                            },
+                            "actionDiscordWebhookUrl": {
+                                "type": "string",
+                                "label": "Discord/Slack Webhook URL",
+                                "validationEndpoint": "/internal/validators/validate-webhook"
+                            },
+                            "actionDiscordSuppressEmbeds": {
+                                "type": "boolean",
+                                "label": "Suppress Embeds (Discord only)",
+                                "helpText": "Controls whether Discord will display embeds with alerts. Turn this on to reduce clutter. Has no effect on Slack webhooks.",
+                                "defaultValue": false
+                            }
+                        }
+                    },
+                    "group_FlairOptions": {
+                        "type": "group",
+                        "label": "Flair options",
+                        "fields": {
+                            "actionSetFlair": {
+                                "type": "select",
+                                "label": "Set Flair",
+                                "helpText": "Sets or overwrites flair for post(s) that hit the specified feeds",
+                                "options": [
+                                    { "label": "Do not set flair", "value": "none" },
+                                    { "label": "Set flair, if none set", "value": "set" },
+                                    { "label": "Set flair, overwriting existing flair", "value": "overwrite" }
+                                ],
+                                "defaultValue": "none",
+                                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+                            },
+                            "actionFlairText": {
+                                "type": "string",
+                                "label": "Flair Text",
+                                "helpText": "Supports {{feeds}} placeholder which will substitute in with the name of the feed(s) that the post is trending in. If more than one feed is found, the feeds will be listed separated by a comma."
+                            },
+                            "actionFlairCssClass": {
+                                "type": "string",
+                                "label": "Flair CSS Class"
+                            },
+                            "actionFlairTemplateId": {
+                                "type": "string",
+                                "label": "Flair Template ID",
+                                "helpText": "Template ID to apply to the flair when 'Set flair, overwriting existing flair' is selected."
+                            }
+                        }
+                    },
+                    "group_StickyCommentOptions": {
+                        "type": "group",
+                        "label": "Sticky comment options",
+                        "fields": {
+                            "actionStickyCommentOption": {
+                                "type": "select",
+                                "label": "Sticky Comment",
+                                "helpText": "Adds a sticky comment to welcome people not used to the subreddit",
+                                "options": [
+                                    { "label": "Do not add a sticky comment", "value": "none" },
+                                    { "label": "Add a sticky comment if there is not already one present", "value": "addifnone" },
+                                    { "label": "Add a sticky comment even if one is present", "value": "addalways" }
+                                ],
+                                "defaultValue": "none",
+                                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+                            },
+                            "actionStickyCommmentContent": {
+                                "type": "paragraph",
+                                "label": "Sticky Comment Text",
+                                "helpText": "The text to include in the sticky comment. Supports {{feeds}} placeholder which will substitute in with the name of the feed(s) that the post is trending in. If more than one feed is found, the feeds will be listed separated by a comma."
+                            },
+                            "actionStickyCommentLock": {
+                                "type": "boolean",
+                                "label": "Lock Sticky Comment",
+                                "helpText": "If enabled, the sticky comment will be locked after creation.",
+                                "defaultValue": true
+                            }
+                        }
+                    },
+                    "group_CrowdControl": {
+                        "type": "group",
+                        "label": "Crowd Control Options",
+                        "fields": {
+                            "actionSetCrowdControl": {
+                                "type": "select",
+                                "label": "Set Crowd Control",
+                                "helpText": "If an option is chosen, any crowd control settings on the post will be overwritten unless 'Don't set' is chosen",
+                                "options": [
+                                    { "label": "Don't set", "value": "ignore" },
+                                    { "label": "Off", "value": "0" },
+                                    { "label": "Moderate filtering", "value": "1" },
+                                    { "label": "High filtering", "value": "2" },
+                                    { "label": "Maximum filtering", "value": "3" }
+                                ],
+                                "defaultValue": "ignore",
+                                "validationEndpoint": "/internal/validators/select-field-has-option-chosen"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "triggers": {
+        "onAppInstall": "/internal/triggers/app-install",
+        "onAppUpgrade": "/internal/triggers/app-upgrade"
+    },
+    "scheduler": {
+        "tasks": {
+            "checkFeeds": "/internal/jobs/check-feeds"
+        }
+    },
+    "menu": {
+        "items": [
+            {
+                "location": "subreddit",
+                "forUserType": "moderator",
+                "label": "Test Trending Tattler",
+                "endpoint": "/internal/menu/test-trending-tattler"
+            }
+        ]
+    },
+    "forms": {
+        "testTrendingTattler": "/internal/forms/test-trending-tattler"
+    }
+}

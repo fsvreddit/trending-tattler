@@ -1,6 +1,5 @@
-import { SettingsValues } from "@devvit/public-api";
-import { PostFound } from "../types.js";
-import { AppSetting, StickyCommentOption } from "../settings.js";
+import { SettingsValues } from "@devvit/web/server";
+import { PostFound, AppSetting, StickyCommentOption } from "..";
 
 export async function alertByStickyComment (stickyCommentAction: StickyCommentOption, post: PostFound, settings: SettingsValues) {
     if (stickyCommentAction === StickyCommentOption.AddIfNone) {

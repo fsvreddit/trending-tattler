@@ -71,6 +71,10 @@ Note: Test Mode is not available on Old Reddit or third-party Reddit clients due
 
 ## Recent changes
 
+### v1.7.3
+
+* Update Devvit and dependencies, and migrate to the Devvit Web framework. No user facing changes in this version.
+
 ### v1.7.2
 
 * Update Devvit and dependencies. No user facing changes in this version.

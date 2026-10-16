@@ -1,6 +1,5 @@
-import { SettingsValues } from "@devvit/public-api";
-import { PostFound } from "../types.js";
-import { AppSetting } from "../settings.js";
+import { SettingsValues } from "@devvit/web/server";
+import { AppSetting, PostFound } from "..";
 
 export async function alertByDiscord (posts: PostFound[], settings: SettingsValues) {
     if (posts.length === 0) {

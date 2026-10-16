@@ -1,8 +1,7 @@
-import { SettingsValues, TriggerContext } from "@devvit/public-api";
-import { PostFound } from "../types.js";
-import { AppSetting, SetFlairOption } from "../settings.js";
+import { reddit, SettingsValues } from "@devvit/web/server";
+import { AppSetting, PostFound, SetFlairOption } from "..";
 
-export async function alertByFlair (flairAction: SetFlairOption, post: PostFound, context: TriggerContext, settings: SettingsValues) {
+export async function alertByFlair (flairAction: SetFlairOption, post: PostFound, settings: SettingsValues) {
     let actionFlairText = settings[AppSetting.ActionFlairText] as string | undefined;
     if (actionFlairText === "") {
         actionFlairText = undefined;
@@ -22,7 +21,7 @@ export async function alertByFlair (flairAction: SetFlairOption, post: PostFound
         actionFlairTemplateId = undefined;
     } else if (actionFlairTemplateId) {
         // Check to see if flair template exists for this site, if not then ignore.
-        const flairTemplates = await context.reddit.getPostFlairTemplates(post.post.subredditName);
+        const flairTemplates = await reddit.getPostFlairTemplates(post.post.subredditName);
         if (!flairTemplates.some(x => x.id === actionFlairTemplateId)) {
             actionFlairTemplateId = undefined;
         }
@@ -38,7 +37,7 @@ export async function alertByFlair (flairAction: SetFlairOption, post: PostFound
     }
 
     try {
-        await context.reddit.setPostFlair({
+        await reddit.setPostFlair({
             postId: post.post.id,
             subredditName: post.post.subredditName,
             text: actionFlairText,
